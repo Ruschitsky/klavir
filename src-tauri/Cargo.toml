@@ -1,0 +1,19 @@
+[package]
+name = "klavir"
+version = "2.1.0"
+description = "Клавир — тренажёр слепой печати"
+edition = "2021"
+
+[lib]
+name = "klavir_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+
+[profile.release]
+opt-level = "s"
+strip = true

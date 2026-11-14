@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "paths": {
+      "zustand": ["./shims/zustand.ts"],
+      "lucide-react": ["./shims/lucide-react.tsx"],
+      "@/lib/cn": ["./shims/cn.ts"],
+      "@/components/ui/button": ["./shims/button.tsx"],
+      "@/*": ["../src/*"]
+    }
+  }
+}

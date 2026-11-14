@@ -1,0 +1,330 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: #0c0c0e;
+  --color-foreground: #f3f2ef;
+  --color-card: #151517;
+  --color-muted: #a3a3ab;
+  --color-faint: #8d8d96;
+  --color-border: #2c2c32;
+  --color-accent: #e7e4dc;
+  --color-accent-foreground: #16161a;
+  --color-good: #8fbfa8;
+  --color-bad: #e0a090;
+  --color-deck: #1b1c1f;
+  --color-well: #101114;
+  --color-key: #26272d;
+  --color-key-ink: #e4e4e8;
+  --font-sans: "Manrope", "Segoe UI", "Noto Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", "Noto Sans Mono", ui-monospace, monospace;
+  --radius-sm: 6px;
+  --radius-md: 14px;
+  --radius-lg: 24px;
+  --radius-xl: 40px;
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100dvh;
+    overflow-x: hidden;
+    background: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    line-height: 1.5;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+}
+
+.tap:active {
+  transform: scale(0.98);
+}
+
+.stage {
+  border-radius: var(--radius-xl);
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  padding: 16px;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+.stage svg {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+}
+
+.prompt {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  min-height: 7.5rem;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: pre-wrap;
+  font-family: var(--font-mono);
+  font-size: clamp(1.25rem, 1rem + 1.4vw, 1.85rem);
+  line-height: 1.55;
+  letter-spacing: -0.02em;
+}
+
+.result-well {
+  display: flex;
+  min-height: 7.5rem;
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
+}
+
+.glyph-now {
+  border-radius: 4px;
+  background: var(--color-accent);
+  color: var(--color-accent-foreground);
+}
+
+.glyph-done {
+  color: var(--color-foreground);
+}
+
+.glyph-next {
+  color: var(--color-faint);
+}
+
+.miss {
+  animation: miss 140ms linear;
+}
+
+@keyframes miss {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  30% {
+    transform: translateX(-2px);
+  }
+  70% {
+    transform: translateX(2px);
+  }
+}
+
+.deck {
+  fill: var(--color-deck);
+}
+
+.well {
+  fill: var(--color-well);
+}
+
+.keycap {
+  fill: var(--color-key);
+  transition: fill 120ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.key-label {
+  fill: var(--color-key-ink);
+  font-family: var(--font-sans);
+}
+
+.bump {
+  fill: color-mix(in oklab, var(--color-key-ink) 40%, transparent);
+}
+
+.is-next .keycap {
+  fill: var(--color-accent);
+}
+
+.is-next .key-label,
+.is-next .chev {
+  fill: var(--color-accent-foreground);
+  stroke: var(--color-accent-foreground);
+}
+
+.is-next .bump {
+  fill: color-mix(in oklab, var(--color-accent-foreground) 45%, transparent);
+}
+
+.is-bad .keycap {
+  fill: color-mix(in oklab, var(--color-bad) 32%, var(--color-key));
+}
+
+.is-bad .key-label {
+  fill: var(--color-bad);
+}
+
+.is-shift .keycap {
+  fill: color-mix(in oklab, var(--color-foreground) 16%, var(--color-key));
+}
+
+.is-shift .key-label {
+  fill: var(--color-foreground);
+}
+
+.is-fresh .keycap {
+  stroke: var(--color-faint);
+  stroke-width: 1.25;
+}
+
+.ghost .key-label,
+.ghost .chev {
+  fill: var(--color-faint);
+  stroke: var(--color-faint);
+}
+
+.chev {
+  fill: none;
+  stroke: var(--color-key-ink);
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .miss {
+    animation: none;
+  }
+
+  .keycap,
+  .tap:active {
+    transition: none;
+    transform: none;
+  }
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---------- Themes ---------- */
+
+:root {
+  color-scheme: dark;
+  --finger-a: #e88fb4;
+  --finger-b: #f0a35e;
+  --finger-c: #9fcf7f;
+  --finger-d: #6aa8f0;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --color-background: #f3f2ee;
+  --color-foreground: #1b1b1f;
+  --color-card: #ffffff;
+  --color-muted: #5c5c66;
+  --color-faint: #7b7b85;
+  --color-border: #d9d7d0;
+  --color-accent: #1b1b1f;
+  --color-accent-foreground: #f3f2ee;
+  --color-good: #2c7a58;
+  --color-bad: #bf4128;
+  --color-deck: #dcdad3;
+  --color-well: #cdcbc3;
+  --color-key: #f8f7f3;
+  --color-key-ink: #2a2a30;
+  --finger-a: #d6588a;
+  --finger-b: #e0852f;
+  --finger-c: #5ea23e;
+  --finger-d: #3d82d6;
+}
+
+/* ---------- Typing details ---------- */
+
+.glyph-wrong {
+  color: var(--color-bad);
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+}
+
+.stage[data-scale="0"] .prompt {
+  font-size: clamp(1.05rem, 0.9rem + 1vw, 1.45rem);
+}
+
+.stage[data-scale="2"] .prompt {
+  font-size: clamp(1.5rem, 1.1rem + 2vw, 2.4rem);
+}
+
+/* While typing, everything except the text and keyboard steps back. */
+.typing-focus .chrome {
+  opacity: 0.28;
+  transition: opacity 200ms ease;
+}
+
+.typing-focus .chrome:hover,
+.typing-focus .chrome:focus-within {
+  opacity: 1;
+}
+
+/* Finger colors. :where() keeps these weaker than the "next key" highlight. */
+:where(.fc .f-lp, .fc .f-rp) .keycap {
+  fill: color-mix(in oklab, var(--finger-a) 26%, var(--color-key));
+}
+
+:where(.fc .f-lr, .fc .f-rr) .keycap {
+  fill: color-mix(in oklab, var(--finger-b) 26%, var(--color-key));
+}
+
+:where(.fc .f-lm, .fc .f-rm) .keycap {
+  fill: color-mix(in oklab, var(--finger-c) 26%, var(--color-key));
+}
+
+:where(.fc .f-li, .fc .f-ri) .keycap {
+  fill: color-mix(in oklab, var(--finger-d) 26%, var(--color-key));
+}
+
+.finger-dot-a {
+  background: var(--finger-a);
+}
+
+.finger-dot-b {
+  background: var(--finger-b);
+}
+
+.finger-dot-c {
+  background: var(--finger-c);
+}
+
+.finger-dot-d {
+  background: var(--finger-d);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-foreground);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .typing-focus .chrome {
+    transition: none;
+  }
+}

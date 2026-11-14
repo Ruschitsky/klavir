@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#141416"/>
+  <rect x="128" y="124" width="256" height="256" rx="52" fill="#e7e4dc"/>
+  <text x="256" y="262" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="170" font-weight="700" fill="#16161a" text-anchor="middle" dominant-baseline="central">К</text>
+  <rect x="226" y="338" width="60" height="10" rx="5" fill="#16161a" opacity="0.55"/>
+</svg>

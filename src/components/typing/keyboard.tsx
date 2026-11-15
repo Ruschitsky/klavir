@@ -20,6 +20,20 @@ function wOf(span: number) {
 }
 
 /** Solid keys get a soft green, weak keys a red that deepens with the score. */
+const IS_MAC = typeof navigator === "undefined" || /Mac|iPhone|iPad/i.test(navigator.platform || "");
+
+/** The drawn keyboard is a MacBook; on other systems the modifier keys get PC names. */
+const PC_LABELS: Record<string, string> = {
+  Backspace: "Backspace",
+  Enter: "Enter",
+  Fn: "Fn",
+  ControlLeft: "Ctrl",
+  AltLeft: "Win",
+  MetaLeft: "Alt",
+  MetaRight: "Alt",
+  AltRight: "Ctrl",
+};
+
 function heatStyle(value: number) {
   const fill =
     value < 0.2
@@ -114,7 +128,8 @@ function Key({
   fresh: boolean;
   heat?: number;
 }) {
-  const face = keyFace(layout, spec, active ? target : null);
+  const baseFace = keyFace(layout, spec, active ? target : null);
+  const face = !IS_MAC && baseFace === spec.label ? (PC_LABELS[spec.code] ?? baseFace) : baseFace;
   const chevron = CHEVRON[spec.label ?? ""];
   const state = [
     bad ? "is-bad" : "",

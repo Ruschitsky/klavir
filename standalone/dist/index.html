@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ru" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Клавир</title>
+    <meta name="description" content="Тренажёр слепой печати: уроки, умная тренировка слабых клавиш, тесты скорости" />
+    <meta name="theme-color" content="#0c0c0e" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" type="image/svg+xml" href="icons/icon.svg" />
+    <link rel="apple-touch-icon" href="icons/icon-180.png" />
+    <script>
+      // Pick the theme before the first paint so a light theme does not flash dark.
+      try {
+        var t = (JSON.parse(localStorage.getItem("klavir-v1") || "{}") || {}).theme;
+        var light = t === "light" || (t !== "dark" && matchMedia("(prefers-color-scheme: light)").matches);
+        document.documentElement.dataset.theme = light ? "light" : "dark";
+      } catch (e) {}
+    </script>
+    <link rel="stylesheet" href="app.css" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <noscript>Для работы тренажёра нужен JavaScript.</noscript>
+    <script src="app.js"></script>
+    <script>
+      // Offline cache. Only works when the app is opened from a web address, not from a file.
+      if ("serviceWorker" in navigator && location.protocol.indexOf("http") === 0) {
+        navigator.serviceWorker.register("sw.js").catch(function () {});
+      }
+    </script>
+  </body>
+</html>

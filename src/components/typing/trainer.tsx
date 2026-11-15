@@ -41,6 +41,9 @@ const LAYOUTS: LayoutId[] = ["ru-pc", "ru", "en"];
 const FINGER_BY_CODE = new Map(ROWS.flat().map((key) => [key.code, key.finger]));
 const NO_WRONG: ReadonlySet<number> = new Set();
 
+// On Windows the layout is switched with different keys than on a Mac.
+const IS_WINDOWS = typeof navigator !== "undefined" && /Win/i.test(navigator.platform || "");
+
 const stars = (acc: number) => (acc >= 98 ? 3 : acc >= 95 ? 2 : acc >= 90 ? 1 : 0);
 
 export function Trainer() {
@@ -223,8 +226,8 @@ export function Trainer() {
     sound,
     strict,
     backspace: copy.backspace,
-    mismatchCyr: copy.mismatchCyr,
-    mismatchLat: copy.mismatchLat,
+    mismatchCyr: IS_WINDOWS ? copy.mismatchCyrWin : copy.mismatchCyr,
+    mismatchLat: IS_WINDOWS ? copy.mismatchLatWin : copy.mismatchLat,
     slow: copy.slowDown,
     actions: run.current.actions,
   };
@@ -564,7 +567,7 @@ export function Trainer() {
     >
       <header className="chrome flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-xs font-medium tracking-widest text-muted uppercase">{copy.kicker}</p>
+          <p className="text-xs font-medium tracking-widest text-muted uppercase">{IS_WINDOWS ? "Windows" : copy.kicker}</p>
           <h1 className="text-3xl font-semibold tracking-tight">Клавир</h1>
           <p className="text-sm text-muted">{copy.sub}</p>
           <DailyBar ui={ui} />

@@ -157,7 +157,7 @@ export function StatsPanel({
                   key={item.ch}
                   className="rounded-md bg-accent px-2 py-0.5 font-mono text-sm text-accent-foreground tabular-nums"
                 >
-                  {item.ch.toLocaleUpperCase(ui === "ru" ? "ru" : "en")} · {item.errPct}%
+                  {item.ch === "\n" ? "↵" : item.ch.toLocaleUpperCase(ui === "ru" ? "ru" : "en")} · {item.errPct}%
                   {item.avgMs ? ` · ${item.avgMs} ${copy.ms}` : ""}
                 </span>
               ))}

@@ -166,6 +166,8 @@ export function legends(layout: LayoutId): Record<string, Legend> {
 const resolveCache = new Map<LayoutId, Map<string, { code: string; shift: boolean }>>();
 
 export function resolveChar(layout: LayoutId, ch: string): { code: string; shift: boolean } | null {
+  // A line break is typed with the Enter key.
+  if (ch === "\n") return { code: "Enter", shift: false };
   let map = resolveCache.get(layout);
   if (!map) {
     map = new Map();
@@ -238,6 +240,7 @@ const HARDWARE: Record<string, string> = {
   Period: ".",
   Slash: "/",
   Space: "space",
+  Enter: "Enter",
 };
 
 export function hardwareName(code: string): string {
@@ -290,7 +293,7 @@ export const ROWS: KeySpec[][] = [
     { code: "KeyL", span: 4, finger: "rr" },
     { code: "Semicolon", span: 4, finger: "rp" },
     { code: "Quote", span: 4, finger: "rp" },
-    { code: "Enter", span: 9, finger: "rp", label: "return", ghost: true },
+    { code: "Enter", span: 9, finger: "rp", label: "return" },
   ],
   [
     { code: "ShiftLeft", span: 9, finger: "lp", label: "shift" },
@@ -329,7 +332,7 @@ export function scriptOf(ch: string): "cyr" | "lat" | null {
 
 export function keyFace(layout: LayoutId, spec: KeySpec, target: string | null): string {
   const hit = target ? resolveChar(layout, target) : null;
-  if (hit && hit.code === spec.code && target && target !== " ") {
+  if (hit && hit.code === spec.code && target && target !== " " && target !== "\n") {
     return target;
   }
   if (spec.label) return spec.label;

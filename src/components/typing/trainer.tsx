@@ -68,6 +68,7 @@ export function Trainer() {
     pairs,
     diagnosed,
     fadeHints,
+    lines: withLines,
     sessions,
     daily,
   } = store;
@@ -163,9 +164,10 @@ export function Trainer() {
       seconds: tempoSec,
       punct,
       nums,
+      lines: withLines,
       smart: mode === "smart" ? smartIn.current : undefined,
     });
-  }, [drill, own, mode, layout, lesson, seed, passage, tempoSec, punct, nums]);
+  }, [drill, own, mode, layout, lesson, seed, passage, tempoSec, punct, nums, withLines]);
 
   // A run starts over whenever the text changes or "restart" is pressed, even if the text is the same.
   const trackKey = `${runId}\u0000${text}`;
@@ -277,7 +279,7 @@ export function Trainer() {
       const node = event.target instanceof HTMLElement ? event.target : null;
       setCaps(event.getModifierState("CapsLock"));
       if (node?.closest("textarea, input")) return;
-      const key = event.key;
+      let key = event.key;
       const snap = run.current;
       if (key === "Backspace") {
         event.preventDefault();
@@ -291,16 +293,21 @@ export function Trainer() {
           snap.actions.esc();
           return;
         }
-        // On a focused button or link these keys keep their normal meaning.
-        if (node?.closest("button, a, select, [role='button']")) return;
-        if (key === "Tab" && !event.shiftKey) {
-          event.preventDefault();
-          snap.actions.tab();
-        } else if (key === "Enter" && snap.endedAt) {
-          event.preventDefault();
-          snap.actions.enter();
+        // At the end of a line Enter is part of the exercise and is typed like any other key.
+        const typesLineBreak = key === "Enter" && !snap.endedAt && snap.text[snap.index] === "\n";
+        if (!typesLineBreak) {
+          // On a focused button or link these keys keep their normal meaning.
+          if (node?.closest("button, a, select, [role='button']")) return;
+          if (key === "Tab" && !event.shiftKey) {
+            event.preventDefault();
+            snap.actions.tab();
+          } else if (key === "Enter" && snap.endedAt) {
+            event.preventDefault();
+            snap.actions.enter();
+          }
+          return;
         }
-        return;
+        key = "\n";
       }
       if (key.length !== 1) return;
       if (snap.mode === "stats" || snap.endedAt || !snap.text) {
@@ -319,9 +326,9 @@ export function Trainer() {
         const latency = lastHit.current ? stamp - lastHit.current : 0;
         if (expected !== " ") {
           bump(runKeys.current, mark, true, latency);
-          if (prevChar.current) bump(runPairs.current, prevChar.current + mark, true, latency);
+          if (prevChar.current && expected !== "\n") bump(runPairs.current, prevChar.current + mark, true, latency);
         }
-        prevChar.current = expected === " " ? "" : mark;
+        prevChar.current = expected === " " || expected === "\n" ? "" : mark;
         lastHit.current = stamp;
         mismatch.current = 0;
         setHint(null);
@@ -341,7 +348,7 @@ export function Trainer() {
       ticks.current.push({ t: stamp - startRef.current, ok: false });
       if (expected !== " ") {
         bump(runKeys.current, mark, false, 0);
-        if (prevChar.current) bump(runPairs.current, prevChar.current + mark, false, 0);
+        if (prevChar.current && expected !== "\n") bump(runPairs.current, prevChar.current + mark, false, 0);
       }
       prevChar.current = "";
       lastHit.current = 0;
@@ -756,6 +763,9 @@ export function Trainer() {
                 <Chip active={nums} onClick={() => store.setSettings({ nums: !nums })}>
                   {copy.nums}
                 </Chip>
+                <Chip active={withLines} onClick={() => store.setSettings({ lines: !withLines })}>
+                  Enter ↵
+                </Chip>
               </div>
             ) : null}
 
@@ -856,7 +866,8 @@ export function Trainer() {
                 onDrill={() => {
                   const ranked = Object.entries(misses)
                     .sort((a, b) => b[1] - a[1])
-                    .map(([ch]) => ch);
+                    .map(([ch]) => ch)
+                    .filter((ch) => ch.trim());
                   const next = weakDrill(ranked, layout);
                   if (!next) return;
                   fromDrill.current = true;
@@ -940,7 +951,14 @@ function coachLine(
   if (done) return copy.done;
   if (!target || !code || !finger) return copy.start;
   const meta = FINGER_META[finger];
-  const glyph = target === " " ? (ui === "ru" ? "Пробел" : "Space") : target.toLocaleUpperCase(ui === "ru" ? "ru" : "en");
+  const glyph =
+    target === " "
+      ? ui === "ru"
+        ? "Пробел"
+        : "Space"
+      : target === "\n"
+        ? copy.newLine
+        : target.toLocaleUpperCase(ui === "ru" ? "ru" : "en");
   const hw = hardwareName(code);
   const same = glyph.toLowerCase() === hw.toLowerCase();
   const where = same ? "" : ` · ${copy.key} ${hw}`;
@@ -961,8 +979,16 @@ function Prompt({
   windowed: boolean;
   wrong: ReadonlySet<number>;
 }) {
-  const start = windowed ? Math.max(0, index - 16) : 0;
-  const end = windowed ? Math.min(text.length, index + 64) : text.length;
+  // Long texts show a window around the cursor. Its edges move to word boundaries,
+  // so a word is never cut in half.
+  let start = 0;
+  let end = text.length;
+  if (windowed) {
+    start = Math.max(0, index - 16);
+    while (start > 0 && text[start - 1] !== " " && text[start - 1] !== "\n") start--;
+    end = Math.min(text.length, index + 64);
+    while (end < text.length && text[end] !== " " && text[end] !== "\n") end++;
+  }
   const chars = [...text.slice(start, end)];
   return (
     <p className={cn("prompt", bad && "miss")}>
@@ -970,7 +996,11 @@ function Prompt({
       {chars.map((ch, offset) => {
         const at = start + offset;
         const state = at < index ? (wrong.has(at) ? "wrong" : "done") : at === index ? "now" : "next";
-        const shown = ch === " " && state !== "done" ? "·" : ch === " " ? "\u00a0" : ch;
+        // A space is drawn as a dot until typed. The zero-width space after the dot lets lines
+        // break between words; without it the browser would split words at the line edge.
+        // A line break is drawn as an arrow until typed, then it simply breaks the line.
+        const shown =
+          ch === " " ? (state === "done" ? " " : "·\u200b") : ch === "\n" ? (state === "done" ? "\n" : "↵\n") : ch;
         return (
           <span
             key={`${at}-${ch}`}

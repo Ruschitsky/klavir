@@ -104,6 +104,14 @@ export function SettingsPanel({ ui, onCheck }: { ui: UiLang; onCheck: () => void
           {copy.off}
         </Chip>
       </Row>
+      <Row label={copy.linesLabel} note={copy.linesNote}>
+        <Chip active={state.lines} onClick={() => setSettings({ lines: true })}>
+          {copy.on}
+        </Chip>
+        <Chip active={!state.lines} onClick={() => setSettings({ lines: false })}>
+          {copy.off}
+        </Chip>
+      </Row>
       <Row label={copy.fadeHints} note={copy.fadeNote}>
         <Chip active={state.fadeHints} onClick={() => setSettings({ fadeHints: true })}>
           {copy.on}

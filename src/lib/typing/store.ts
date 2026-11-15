@@ -51,6 +51,8 @@ type Persisted = {
   fingerColors: boolean;
   /** Slowly fade the on-screen keyboard as the person gets more practice. */
   fadeHints: boolean;
+  /** Break exercises into lines, so Enter has to be pressed. */
+  lines: boolean;
   tempoSec: TempoSec;
   punct: boolean;
   nums: boolean;
@@ -59,7 +61,7 @@ type Persisted = {
 
 export type Settings = Pick<
   Persisted,
-  "theme" | "scale" | "strict" | "showKeys" | "fingerColors" | "fadeHints" | "tempoSec" | "punct" | "nums" | "goalMin"
+  "theme" | "scale" | "strict" | "showKeys" | "fingerColors" | "fadeHints" | "lines" | "tempoSec" | "punct" | "nums" | "goalMin"
 >;
 
 export type RecordExtra = {
@@ -89,6 +91,7 @@ const defaults: Persisted = {
   showKeys: true,
   fingerColors: false,
   fadeHints: false,
+  lines: true,
   tempoSec: 60,
   punct: false,
   nums: false,
@@ -133,7 +136,7 @@ function normalize(raw: unknown): Persisted {
   if (![0, 1, 2].includes(merged.scale)) merged.scale = 1;
   if (!["auto", "dark", "light"].includes(merged.theme)) merged.theme = "auto";
   if (typeof merged.goalMin !== "number" || merged.goalMin < 1 || merged.goalMin > 240) merged.goalMin = 10;
-  for (const flag of ["strict", "showKeys", "fingerColors", "fadeHints", "punct", "nums", "sound", "diagnosed"] as const) {
+  for (const flag of ["strict", "showKeys", "fingerColors", "fadeHints", "lines", "punct", "nums", "sound", "diagnosed"] as const) {
     if (typeof merged[flag] !== "boolean") merged[flag] = defaults[flag];
   }
   if (merged.ui !== "ru" && merged.ui !== "en") merged.ui = "ru";
@@ -178,6 +181,7 @@ function snapshot(state: State): Persisted {
     showKeys: state.showKeys,
     fingerColors: state.fingerColors,
     fadeHints: state.fadeHints,
+    lines: state.lines,
     tempoSec: state.tempoSec,
     punct: state.punct,
     nums: state.nums,
@@ -278,6 +282,7 @@ export const useKlavir = create<State>((set, get) => {
         showKeys: keep.showKeys,
         fingerColors: keep.fingerColors,
         fadeHints: keep.fadeHints,
+        lines: keep.lines,
         goalMin: keep.goalMin,
         lessonId: lessonIdFor(keep.layout),
       });

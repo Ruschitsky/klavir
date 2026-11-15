@@ -235,6 +235,20 @@ export const RU_LESSONS: Lesson[] = [
     len: 80,
   },
   {
+    id: "ru-enter",
+    title: bi("Новая строка", "New line"),
+    blurb: bi(
+      "Клавиша ввода (Enter) — правый мизинец. В конце каждой строки нажимайте её и возвращайте руку домой.",
+      "Enter is pressed with the right pinky. Press it at the end of every line and bring the hand back home.",
+    ),
+    allow: "",
+    fresh: "\n",
+    patterns: [],
+    fixed:
+      "Утро.\nЧай.\nОкно.\nДом.\nТишина.\nЗавтра снова.\nКаждая строка кончается клавишей ввода.\nПравый мизинец тянется к ней и возвращается домой.\nСпокойно.\nРовно.\nБез спешки.\nЕщё одна строка.\nИ ещё одна.\nГотово.",
+    len: 150,
+  },
+  {
     id: "ru-phrase",
     title: bi("Фразы", "Phrases"),
     blurb: bi("Связный текст подлиннее. Смотрите на экран, не на клавиши.", "A longer connected text. Eyes on the screen."),
@@ -355,6 +369,20 @@ export const EN_LESSONS: Lesson[] = [
     len: 80,
   },
   {
+    id: "en-enter",
+    title: bi("Новая строка", "New line"),
+    blurb: bi(
+      "Клавиша ввода (Enter) — правый мизинец. В конце каждой строки нажимайте её и возвращайте руку домой.",
+      "Enter is pressed with the right pinky. Press it at the end of every line and bring the hand back home.",
+    ),
+    allow: "",
+    fresh: "\n",
+    patterns: [],
+    fixed:
+      "Morning.\nTea.\nWindow.\nHome.\nSilence.\nTomorrow again.\nEvery line ends with the return key.\nThe right pinky reaches for it and goes back home.\nCalm.\nSteady.\nNo rush.\nOne more line.\nAnd one more.\nDone.",
+    len: 130,
+  },
+  {
     id: "en-phrase",
     title: bi("Фразы", "Phrases"),
     blurb: bi("Связный текст подлиннее.", "A longer connected text."),
@@ -399,8 +427,11 @@ function hash(text: string) {
 }
 
 export function sanitize(text: string, layout: LayoutId): string {
-  const kept = [...text].filter((ch) => ch === " " || resolveChar(layout, ch) || equivalentsSafe(ch, layout));
-  return kept.join("").replace(/ +/g, " ").trim();
+  const kept = [...text.replace(/\r\n?/g, "\n")].filter(
+    (ch) => ch === " " || resolveChar(layout, ch) || equivalentsSafe(ch, layout),
+  );
+  // Line breaks stay (they are typed with Enter); stray spaces around them and empty lines go.
+  return kept.join("").replace(/ *\n */g, "\n").replace(/\n+/g, "\n").replace(/ +/g, " ").trim();
 }
 
 function equivalentsSafe(ch: string, layout: LayoutId): boolean {
@@ -444,7 +475,7 @@ function generate(lesson: Lesson, seed: number): string {
   return parts.join(" ");
 }
 
-type Extras = { punct?: boolean; nums?: boolean };
+type Extras = { punct?: boolean; nums?: boolean; lines?: boolean };
 
 /** Capital letters, commas, full stops and numbers, like Monkeytype's punctuation and numbers toggles. */
 function decorate(words: string[], rng: () => number, extras: Extras): string[] {
@@ -478,12 +509,34 @@ function decorate(words: string[], rng: () => number, extras: Extras): string[] 
   return out;
 }
 
+/** Joins words with spaces, or, with `lines`, breaks the text into lines of 5–9 words (or at a sentence end). */
+function joinWords(parts: string[], rng: () => number, lines: boolean): string {
+  if (!lines) return parts.join(" ");
+  let out = "";
+  let run = 0;
+  let limit = 5 + Math.floor(rng() * 5);
+  parts.forEach((word, i) => {
+    if (i > 0) {
+      if (run >= limit || (run >= 4 && /[.?!]$/.test(parts[i - 1]))) {
+        out += "\n";
+        run = 0;
+        limit = 5 + Math.floor(rng() * 5);
+      } else {
+        out += " ";
+      }
+    }
+    out += word;
+    run += 1;
+  });
+  return out;
+}
+
 function makeWords(layout: LayoutId, seed: number, count: number, extras: Extras = {}): string {
   const dict = layout === "en" ? EN_WORDS : RU_WORDS;
   const rng = mulberry32(seed + (layout === "en" ? 17 : 91));
   const parts: string[] = [];
   for (let i = 0; i < count; i++) parts.push(dict[Math.floor(rng() * dict.length)] ?? "a");
-  return sanitize(decorate(parts, rng, extras).join(" "), layout);
+  return sanitize(joinWords(decorate(parts, rng, extras), rng, Boolean(extras.lines)), layout);
 }
 
 /**
@@ -660,7 +713,9 @@ function smartText(opts: {
     parts.push(word);
     prev = word;
   }
-  return sanitize(decorate(parts, rng, opts.extras).join(" "), opts.layout);
+  // Beginners with only a few letters do not get line breaks yet.
+  const lines = Boolean(opts.extras.lines) && letters.length >= 7;
+  return sanitize(joinWords(decorate(parts, rng, opts.extras), rng, lines), opts.layout);
 }
 
 const isLetter = (ch: string) => /\p{L}/u.test(ch);
@@ -757,10 +812,12 @@ export function exerciseText(opts: {
   seconds?: number;
   punct?: boolean;
   nums?: boolean;
+  /** Break the text into lines, so Enter has to be pressed. */
+  lines?: boolean;
   /** Needed for the adaptive mode. */
   smart?: { letters: string; fresh?: string; keys: KeyMap; pairs?: KeyMap };
 }): string {
-  const extras = { punct: opts.punct, nums: opts.nums };
+  const extras = { punct: opts.punct, nums: opts.nums, lines: opts.lines };
   if (opts.mode === "basics") {
     if (opts.lesson.fixed) return sanitize(opts.lesson.fixed, opts.layout);
     return sanitize(generate(opts.lesson, opts.seed), opts.layout);
@@ -782,7 +839,8 @@ export function exerciseText(opts: {
   if (opts.mode === "tempo") return makeWords(opts.layout, opts.seed, Math.round((opts.seconds ?? 60) * 5), extras);
   const passages = opts.layout === "en" ? EN_PASSAGES : RU_PASSAGES;
   const body = passages[opts.passage % passages.length]?.body ?? "";
-  return sanitize(body, opts.layout);
+  // With line breaks on, every sentence starts on a new line.
+  return sanitize(opts.lines ? body.replace(/([.!?]) /g, "$1\n") : body, opts.layout);
 }
 
 export function passagesFor(layout: LayoutId): Passage[] {
